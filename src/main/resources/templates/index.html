@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Smart Expense Tracker</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            background: linear-gradient(to right, #43cea2, #185a9d); 
+            margin: 0; 
+            padding: 20px; 
+        }
+        .container { 
+            max-width: 900px; 
+            margin: 30px auto; 
+            background: white; 
+            padding: 25px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2); 
+        }
+        h2 { text-align: center; color: #185a9d; margin-bottom: 20px; }
+        h3 { color: #333; border-bottom: 2px solid #43cea2; padding-bottom: 5px; }
+        input, select, button { 
+            padding: 12px; 
+            margin: 8px 0; 
+            width: 100%; 
+            border-radius: 6px; 
+            border: 1px solid #ccc; 
+            font-size: 15px;
+        }
+        button { 
+            background: #28a745; 
+            color: white; 
+            border: none; 
+            cursor: pointer; 
+            font-weight: bold;
+            transition: 0.3s;
+        }
+        button:hover { background: #218838; }
+        .btn-secondary {
+            background: #185a9d;
+        }
+        .btn-secondary:hover {
+            background: #123f6b;
+        }
+        .btn-gray {
+            background: #6c757d;
+        }
+        .btn-gray:hover {
+            background: #545b62;
+        }
+        .btn-danger {
+            background: #dc3545;
+            padding: 6px 12px;
+            font-size: 13px;
+            width: auto;
+        }
+        .btn-danger:hover {
+            background: #b02a37;
+        }
+        table { 
+            width: 100%; 
+            margin-top: 20px; 
+            border-collapse: collapse; 
+        }
+        td, th { 
+            border: 1px solid #ddd; 
+            padding: 12px; 
+            text-align: center; 
+        }
+        th { background: #185a9d; color: white; }
+        tr:nth-child(even) { background: #f9f9f9; }
+        .filter-form {
+            display: flex; 
+            gap: 10px; 
+            align-items: center; 
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>💰 Smart Expense Tracker</h2>
+    <div>
+        <h3>➕ Add New Expense</h3>
+        <form th:action="@{/add}" method="post">
+            <input type="text" name="title" placeholder="Expense Title - ex: Groceries" required>
+            <input type="number" step="0.01" name="amount" placeholder="Amount - ex: 500.50" required>
+            
+            <select name="category" required>
+                <option value="" disabled selected>Select Category</option>
+                <option>Food</option>
+                <option>Travel</option>
+                <option>Shopping</option>
+                <option>Bills</option>
+                <option>Health</option>
+                <option>Other</option>
+            </select>
+            
+            <input type="date" name="date" required>
+            <button type="submit">Add Expense</button>
+        </form>
+    </div>
+
+    <div style="margin-top: 30px;">
+        <table>
+            <thead>
+                <tr>
+                    <th colspan="6" style="font-size: 18px;">
+                        📋 Expense List 
+                        <span th:if="${selectedCategory != null}" style="font-size: 14px; font-weight: normal;">
+                            - Filtered: <b th:text="${selectedCategory}"></b>
+                        </span>
+                    </th>
+                </tr>
+                <tr>
+                    <th colspan="6" style="background: #e8f4ff; padding: 15px;">
+                        <form method="get" action="/" class="filter-form">
+                            <label style="color: #185a9d; font-weight: bold;">Filter by Category:</label>
+                            <select name="category" style="width: 200px;">
+                                <option value="">All Categories</option>
+                                <option value="Food" th:selected="${selectedCategory == 'Food'}">Food</option>
+                                <option value="Travel" th:selected="${selectedCategory == 'Travel'}">Travel</option>
+                                <option value="Shopping" th:selected="${selectedCategory == 'Shopping'}">Shopping</option>
+                                <option value="Bills" th:selected="${selectedCategory == 'Bills'}">Bills</option>
+                                <option value="Health" th:selected="${selectedCategory == 'Health'}">Health</option>
+                                <option value="Other" th:selected="${selectedCategory == 'Other'}">Other</option>
+                            </select>
+                            <button type="submit" class="btn-secondary" style="width: auto;">Apply</button>
+                            <a href="/" style="text-decoration: none;">
+                                <button type="button" class="btn-gray" style="width: auto;">Reset</button>
+                            </a>
+                        </form>
+                    </th>
+                </tr>
+                <tr>
+                    <th>ID</th>
+                    <th>Title</th>
+                    <th>Amount</th>
+                    <th>Category</th>
+                    <th>Date</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="expense : ${expenses}">
+                    <td th:text="${expense.id}"></td>
+                    <td th:text="${expense.title}"></td>
+                    <td>₹<span th:text="${expense.amount}"></span></td>
+                    <td th:text="${expense.category}"></td>
+                    <td th:text="${expense.date}"></td>
+                    <td>
+                        <form th:action="@{/delete/{id}(id=${expense.id})}" method="post" 
+                              onsubmit="return confirm('Are you sure you want to delete this expense?');">
+                            <button type="submit" class="btn-danger">🗑️ Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(expenses)}">
+                    <td colspan="6" style="text-align: center; color: red; font-weight: bold;">No expenses found</td>
+                </tr>
+            </tbody>
+            <tfoot>
+                <tr style="background: #185a9d; color: white; font-weight: bold; font-size: 16px;">
+                    <td colspan="2">Total Sum</td>
+                    <td>₹<span th:text="${total}">0.00</span></td>
+                    <td colspan="3" th:text="${selectedCategory != null ? 'Category: ' + selectedCategory : 'All Categories'}"></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    
+</div>
+</body>
+</html>
